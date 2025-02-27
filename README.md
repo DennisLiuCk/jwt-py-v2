@@ -36,6 +36,30 @@ This tool generates JWT tokens for API authentication with specific claims and c
 
 ## Usage
 
+### Graphical User Interface (Windows App)
+
+This project includes a graphical user interface for easier token generation:
+
+1. Run the UI application:
+   ```
+   python token_generator_app.py
+   ```
+   
+2. Or build a standalone Windows executable:
+   ```
+   build.bat
+   ```
+   Then run the generated executable `dist\JWT_Token_Generator.exe`
+
+The GUI provides:
+- Form fields for all configuration values
+- Options to load and save configuration files
+- Simple token generation with a click
+- Copy token functionality for easy use
+- Display of token details and usage instructions
+
+### Command Line Usage
+
 Generate a JWT token using the default configuration:
 
 ```
