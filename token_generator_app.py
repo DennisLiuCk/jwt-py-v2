@@ -8,33 +8,181 @@ import time
 from datetime import datetime
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
+import base64
+from PIL import Image, ImageTk
+import io
+
+class ModernUI:
+    """Modern UI styling class"""
+    # Modern color palette
+    COLORS = {
+        "primary": "#1976D2",  # Blue
+        "primary_light": "#BBDEFB", 
+        "primary_dark": "#0D47A1",
+        "secondary": "#26C6DA",  # Cyan
+        "secondary_light": "#B2EBF2",
+        "accent": "#FF5722",  # Deep Orange
+        "background": "#F5F5F5",  # Light grey
+        "surface": "#FFFFFF",  # White
+        "text_primary": "#212121",  # Dark grey
+        "text_secondary": "#757575",  # Medium grey
+        "divider": "#BDBDBD",  # Light grey
+    }
+    
+    # Modern styles
+    STYLES = {
+        "font": ("Segoe UI", 10),
+        "heading": ("Segoe UI", 18, "bold"),
+        "subheading": ("Segoe UI", 14, "bold"),
+        "button_padding": 10,
+        "widget_radius": 4,
+        "section_padding": 15
+    }
+    
+    @classmethod
+    def apply_styles(cls, root):
+        style = ttk.Style()
+        
+        # Configure the base theme
+        style.theme_use('clam')
+        
+        # Configure TFrame
+        style.configure("TFrame", background=cls.COLORS["background"])
+        style.configure("Card.TFrame", background=cls.COLORS["surface"], 
+                        relief="flat", borderwidth=0)
+        
+        # Configure TLabelframe
+        style.configure("TLabelframe", background=cls.COLORS["background"], 
+                        foreground=cls.COLORS["text_primary"], 
+                        font=cls.STYLES["subheading"])
+        style.configure("TLabelframe.Label", 
+                        font=cls.STYLES["subheading"],
+                        background=cls.COLORS["background"], 
+                        foreground=cls.COLORS["primary_dark"])
+        
+        # Configure TLabel
+        style.configure("TLabel", background=cls.COLORS["background"], 
+                        foreground=cls.COLORS["text_primary"], 
+                        font=cls.STYLES["font"])
+        style.configure("Title.TLabel", 
+                        font=cls.STYLES["heading"],
+                        foreground=cls.COLORS["primary_dark"], 
+                        background=cls.COLORS["background"])
+        
+        # Configure TEntry
+        style.configure("TEntry", 
+                        fieldbackground=cls.COLORS["surface"], 
+                        foreground=cls.COLORS["text_primary"],
+                        bordercolor=cls.COLORS["primary_light"],
+                        lightcolor=cls.COLORS["primary_light"],
+                        darkcolor=cls.COLORS["primary_light"])
+        style.map("TEntry", 
+                  fieldbackground=[('focus', cls.COLORS["surface"])],
+                  bordercolor=[('focus', cls.COLORS["primary"])])
+        
+        # Configure TButton
+        style.configure("TButton", 
+                        background=cls.COLORS["primary"],
+                        foreground=cls.COLORS["surface"], 
+                        font=cls.STYLES["font"],
+                        borderwidth=0,
+                        focuscolor=cls.COLORS["primary_dark"],
+                        padding=cls.STYLES["button_padding"])
+        style.map("TButton",
+                  background=[('active', cls.COLORS["primary_dark"]), 
+                             ('pressed', cls.COLORS["primary_dark"])],
+                  relief=[('pressed', 'flat'), ('!pressed', 'flat')])
+                  
+        # Accent button
+        style.configure("Accent.TButton", 
+                        background=cls.COLORS["accent"],
+                        foreground=cls.COLORS["surface"])
+        style.map("Accent.TButton",
+                  background=[('active', "#E64A19"), 
+                             ('pressed', "#BF360C")])
+                             
+        # Secondary button
+        style.configure("Secondary.TButton", 
+                        background=cls.COLORS["secondary"],
+                        foreground=cls.COLORS["surface"])
+        style.map("Secondary.TButton",
+                  background=[('active', "#00ACC1"), 
+                             ('pressed', "#00838F")])
+        
+        # Configure TSpinbox
+        style.configure("TSpinbox", 
+                        background=cls.COLORS["surface"],
+                        fieldbackground=cls.COLORS["surface"], 
+                        foreground=cls.COLORS["text_primary"],
+                        arrowcolor=cls.COLORS["primary"])
+                        
+        # Configure Horizontal TSeparator
+        style.configure("TSeparator", 
+                        background=cls.COLORS["divider"])
+        
+        # Set global background                
+        root.configure(background=cls.COLORS["background"])
 
 class TokenGeneratorApp:
     def __init__(self, root):
         self.root = root
         self.root.title("JWT Token Generator")
-        self.root.geometry("800x650")
+        
+        # Increase initial window size for better visibility
+        self.root.geometry("1000x750")
+        self.root.minsize(1000, 750)
         self.root.resizable(True, True)
         
-        # 設置主題風格
-        style = ttk.Style()
-        style.theme_use('clam')
+        # Center the window on screen
+        self.center_window(1000, 750)
         
-        # 創建主框架
-        main_frame = ttk.Frame(root, padding="10")
-        main_frame.pack(fill=tk.BOTH, expand=True)
+        # Apply modern styling
+        ModernUI.apply_styles(root)
         
-        # 建立標題標籤
-        title_label = ttk.Label(main_frame, text="JWT Token Generator", font=("Arial", 18, "bold"))
-        title_label.grid(column=0, row=0, columnspan=2, sticky=tk.W, pady=(0, 10))
+        # Create a main container frame with padding
+        container = ttk.Frame(root, style="TFrame", padding="20")
+        container.pack(fill=tk.BOTH, expand=True)
         
-        # 創建輸入框架
-        input_frame = ttk.LabelFrame(main_frame, text="Configuration Settings", padding="10")
-        input_frame.grid(column=0, row=1, sticky=(tk.W, tk.E, tk.N, tk.S), padx=5, pady=5)
-        main_frame.columnconfigure(0, weight=1)
-        main_frame.rowconfigure(1, weight=1)
+        # Create a header section
+        header_frame = ttk.Frame(container, style="TFrame")
+        header_frame.pack(fill=tk.X, pady=(0, 15))
         
-        # 添加輸入欄位
+        # Application title 
+        title_label = ttk.Label(header_frame, text="JWT Token Generator", style="Title.TLabel")
+        title_label.pack(side=tk.LEFT, padx=5)
+        
+        # Create a horizontal separator below header
+        separator = ttk.Separator(container, orient='horizontal')
+        separator.pack(fill=tk.X, pady=(0, 20))
+        
+        # Main content area - using grid layout for better control
+        content_frame = ttk.Frame(container, style="TFrame")
+        content_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Configure column weights to ensure proper sizing
+        content_frame.columnconfigure(0, weight=1)   # Left column
+        content_frame.columnconfigure(1, weight=1)   # Right column
+        content_frame.rowconfigure(0, weight=1)      # Both columns expand vertically
+        
+        # Left column for configuration (using grid now)
+        left_column = ttk.Frame(content_frame, style="TFrame", padding=(0, 0, 10, 0))
+        left_column.grid(row=0, column=0, sticky="nsew")
+        
+        # Right column for results (using grid now)
+        right_column = ttk.Frame(content_frame, style="TFrame", padding=(10, 0, 0, 0))
+        right_column.grid(row=0, column=1, sticky="nsew")
+        
+        # Make sure both columns expand
+        left_column.columnconfigure(0, weight=1)
+        right_column.columnconfigure(0, weight=1)
+        left_column.rowconfigure(0, weight=1)
+        right_column.rowconfigure(0, weight=1)
+        
+        # Create configuration section in the left column
+        config_frame = ttk.LabelFrame(left_column, text="Configuration Settings", padding=ModernUI.STYLES["section_padding"])
+        config_frame.grid(row=0, column=0, sticky="nsew")
+        
+        # Variables for input fields
         self.subject_var = tk.StringVar()
         self.api_key_var = tk.StringVar()
         self.storefront_code_var = tk.StringVar()
@@ -42,68 +190,159 @@ class TokenGeneratorApp:
         self.private_key_var = tk.StringVar()
         self.iat_offset_var = tk.IntVar(value=0)
         
-        # 標籤和輸入欄位的配置
-        ttk.Label(input_frame, text="Subject:").grid(column=0, row=0, sticky=tk.W, padx=5, pady=5)
-        ttk.Entry(input_frame, width=50, textvariable=self.subject_var).grid(column=1, row=0, sticky=(tk.W, tk.E), padx=5, pady=5)
+        # Create grid for form fields
+        form_frame = ttk.Frame(config_frame, style="TFrame")
+        form_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        form_frame.columnconfigure(1, weight=1)
         
-        ttk.Label(input_frame, text="API Key:").grid(column=0, row=1, sticky=tk.W, padx=5, pady=5)
-        ttk.Entry(input_frame, width=50, textvariable=self.api_key_var).grid(column=1, row=1, sticky=(tk.W, tk.E), padx=5, pady=5)
+        # Input fields
+        row = 0
+        for label_text, var in [
+            ("Subject:", self.subject_var),
+            ("API Key:", self.api_key_var),
+            ("Storefront Code:", self.storefront_code_var),
+            ("Name:", self.name_var)
+        ]:
+            ttk.Label(form_frame, text=label_text).grid(
+                column=0, row=row, sticky=tk.W, padx=(0, 10), pady=10)
+            ttk.Entry(form_frame, textvariable=var).grid(
+                column=1, row=row, sticky=(tk.W, tk.E), pady=10)
+            row += 1
+
+        # IAT Offset with spinbox
+        ttk.Label(form_frame, text="IAT Offset (minutes):").grid(
+            column=0, row=row, sticky=tk.W, padx=(0, 10), pady=10)
+        ttk.Spinbox(form_frame, from_=-60, to=60, textvariable=self.iat_offset_var, width=10).grid(
+            column=1, row=row, sticky=tk.W, pady=10)
+        row += 1
         
-        ttk.Label(input_frame, text="Storefront Code:").grid(column=0, row=2, sticky=tk.W, padx=5, pady=5)
-        ttk.Entry(input_frame, width=50, textvariable=self.storefront_code_var).grid(column=1, row=2, sticky=(tk.W, tk.E), padx=5, pady=5)
+        # Private Key text area
+        ttk.Label(form_frame, text="Private Key:").grid(
+            column=0, row=row, sticky=tk.NW, padx=(0, 10), pady=10)
         
-        ttk.Label(input_frame, text="Name:").grid(column=0, row=3, sticky=tk.W, padx=5, pady=5)
-        ttk.Entry(input_frame, width=50, textvariable=self.name_var).grid(column=1, row=3, sticky=(tk.W, tk.E), padx=5, pady=5)
+        private_key_frame = ttk.Frame(form_frame, style="TFrame")
+        private_key_frame.grid(column=1, row=row, sticky=(tk.W, tk.E), pady=10)
+        private_key_frame.columnconfigure(0, weight=1)
         
-        ttk.Label(input_frame, text="IAT Offset (minutes):").grid(column=0, row=4, sticky=tk.W, padx=5, pady=5)
-        ttk.Spinbox(input_frame, from_=-60, to=60, textvariable=self.iat_offset_var, width=5).grid(column=1, row=4, sticky=tk.W, padx=5, pady=5)
-        
-        ttk.Label(input_frame, text="Private Key:").grid(column=0, row=5, sticky=tk.W, padx=5, pady=5)
-        private_key_frame = ttk.Frame(input_frame)
-        private_key_frame.grid(column=1, row=5, sticky=(tk.W, tk.E), padx=5, pady=5)
-        
-        self.private_key_text = tk.Text(private_key_frame, width=50, height=8, wrap=tk.WORD)
+        self.private_key_text = tk.Text(
+            private_key_frame, 
+            height=8, 
+            wrap=tk.WORD, 
+            bg=ModernUI.COLORS["surface"],
+            fg=ModernUI.COLORS["text_primary"],
+            relief="flat",
+            font=ModernUI.STYLES["font"],
+            padx=8,
+            pady=8,
+            borderwidth=1,
+            highlightthickness=1,
+            highlightbackground=ModernUI.COLORS["primary_light"],
+            highlightcolor=ModernUI.COLORS["primary"]
+        )
         self.private_key_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
         scrollbar = ttk.Scrollbar(private_key_frame, orient="vertical", command=self.private_key_text.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.private_key_text['yscrollcommand'] = scrollbar.set
         
-        # 按鈕框架
-        button_frame = ttk.Frame(main_frame)
-        button_frame.grid(column=0, row=2, sticky=(tk.W, tk.E), padx=5, pady=10)
+        # Configuration action buttons
+        button_frame = ttk.Frame(left_column, style="TFrame")
+        button_frame.grid(row=1, column=0, sticky="ew", pady=(5, 0))
         
-        # 添加按鈕
-        ttk.Button(button_frame, text="Load Config", command=self.load_config).grid(column=0, row=0, padx=5)
-        ttk.Button(button_frame, text="Save Config", command=self.save_config).grid(column=1, row=0, padx=5)
-        ttk.Button(button_frame, text="Generate Token", command=self.generate_token).grid(column=2, row=0, padx=5)
+        ttk.Button(button_frame, text="Load Config", style="Secondary.TButton", command=self.load_config).pack(
+            side=tk.LEFT, padx=(0, 10))
+        ttk.Button(button_frame, text="Save Config", style="Secondary.TButton", command=self.save_config).pack(
+            side=tk.LEFT, padx=(0, 10))
         
-        # 結果框架
-        result_frame = ttk.LabelFrame(main_frame, text="Generated Token", padding="10")
-        result_frame.grid(column=0, row=3, sticky=(tk.W, tk.E), padx=5, pady=5)
+        # Result section in the right column
+        result_frame = ttk.LabelFrame(right_column, text="Generated Token", padding=ModernUI.STYLES["section_padding"])
+        result_frame.grid(row=0, column=0, sticky="nsew")
         
-        # 添加結果文本框
-        self.result_text = tk.Text(result_frame, wrap=tk.WORD, width=80, height=10)
+        # Make sure result frame expands properly
+        result_frame.columnconfigure(0, weight=1)
+        result_frame.rowconfigure(0, weight=1)
+        
+        # Result text area with modern styling
+        result_container = ttk.Frame(result_frame, style="TFrame")
+        result_container.pack(fill=tk.BOTH, expand=True, pady=(5, 10))
+        
+        self.result_text = tk.Text(
+            result_container, 
+            wrap=tk.WORD, 
+            height=15,
+            bg=ModernUI.COLORS["surface"],
+            fg=ModernUI.COLORS["text_primary"],
+            relief="flat",
+            font=ModernUI.STYLES["font"],
+            padx=10,
+            pady=10,
+            borderwidth=1,
+            highlightthickness=1,
+            highlightbackground=ModernUI.COLORS["primary_light"],
+            highlightcolor=ModernUI.COLORS["primary"]
+        )
         self.result_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
-        result_scrollbar = ttk.Scrollbar(result_frame, orient="vertical", command=self.result_text.yview)
+        result_scrollbar = ttk.Scrollbar(result_container, orient="vertical", command=self.result_text.yview)
         result_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.result_text['yscrollcommand'] = result_scrollbar.set
         
-        # 添加複製按鈕
-        ttk.Button(main_frame, text="Copy Token", command=self.copy_token).grid(column=0, row=4, sticky=tk.E, padx=5, pady=5)
+        # Action buttons for the results area
+        action_frame = ttk.Frame(right_column, style="TFrame")
+        action_frame.grid(row=1, column=0, sticky="ew", pady=(5, 0))
         
-        # 狀態欄
+        # Generate token button with larger size (accent color)
+        generate_btn = ttk.Button(
+            action_frame, 
+            text="Generate Token", 
+            style="Accent.TButton", 
+            command=self.generate_token
+        )
+        generate_btn.pack(side=tk.LEFT, padx=(0, 10))
+        
+        # Copy token button
+        copy_btn = ttk.Button(
+            action_frame, 
+            text="Copy Token", 
+            command=self.copy_token
+        )
+        copy_btn.pack(side=tk.LEFT)
+        
+        # Status bar at the bottom of the main window
         self.status_var = tk.StringVar()
         self.status_var.set("Ready")
-        status_bar = ttk.Label(root, textvariable=self.status_var, relief=tk.SUNKEN, anchor=tk.W)
+        status_bar = ttk.Label(
+            root, 
+            textvariable=self.status_var, 
+            relief=tk.SUNKEN, 
+            anchor=tk.W,
+            background=ModernUI.COLORS["primary_light"],
+            foreground=ModernUI.COLORS["primary_dark"],
+            padding=(10, 5)
+        )
         status_bar.pack(side=tk.BOTTOM, fill=tk.X)
         
-        # 嘗試載入默認配置
+        # Try to load default configuration
         try:
             self.load_default_config()
         except Exception as e:
             messagebox.showwarning("Warning", f"Could not load default config: {str(e)}")
+            
+        # Force update to ensure everything is laid out correctly
+        self.root.update_idletasks()
+    
+    def center_window(self, width, height):
+        """Center the window on the screen"""
+        # Get screen width and height
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        # Calculate position coordinates
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+        
+        # Set the window position
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
 
     def load_default_config(self):
         """嘗試載入默認配置文件"""
@@ -247,20 +486,30 @@ class TokenGeneratorApp:
     def display_result(self, token, config, iat_time):
         """在結果文本框中顯示令牌信息"""
         self.result_text.delete(1.0, tk.END)
-        result = f"===== 生成的JWT Token =====\n{token}\n\n"
-        result += f"===== Token詳細信息 =====\n"
-        result += f"storefrontStoreCode: {config.get('storefrontStoreCode', '')}\n"
-        result += f"IAT時間: {iat_time}\n\n"
-        result += f"===== 使用說明 =====\n"
-        result += "1. 請將此Token用於API請求的Authorization頭部或相應參數 x-auth-token: {token}\n"
-        result += "2. Token僅在生成後30分鐘內有效\n"
-        result += "3. Token的IAT時間偏移可通過設置IAT Offset參數調整\n"
+        
+        # Display token with styling
+        self.result_text.tag_configure("header", font=("Segoe UI", 12, "bold"), foreground=ModernUI.COLORS["primary_dark"])
+        self.result_text.tag_configure("token", font=("Consolas", 10), background="#F0F8FF", foreground="#0D47A1")
+        self.result_text.tag_configure("subheader", font=("Segoe UI", 11, "bold"), foreground=ModernUI.COLORS["secondary"])
+        self.result_text.tag_configure("info", foreground=ModernUI.COLORS["text_primary"])
+        self.result_text.tag_configure("important", foreground=ModernUI.COLORS["accent"], font=("Segoe UI", 10, "bold"))
+        
+        self.result_text.insert(tk.END, "生成的JWT Token\n", "header")
+        self.result_text.insert(tk.END, token + "\n\n", "token")
+        
+        self.result_text.insert(tk.END, "Token詳細信息\n", "subheader")
+        self.result_text.insert(tk.END, f"storefrontStoreCode: {config.get('storefrontStoreCode', '')}\n", "info")
+        self.result_text.insert(tk.END, f"IAT時間: {iat_time}\n\n", "info")
+        
+        self.result_text.insert(tk.END, "使用說明\n", "subheader")
+        self.result_text.insert(tk.END, "1. 請將此Token用於API請求的Authorization頭部或相應參數\n", "info")
+        self.result_text.insert(tk.END, "   x-auth-token: " + token[:20] + "...\n", "info")
+        self.result_text.insert(tk.END, "2. Token僅在生成後30分鐘內有效\n", "info")
+        self.result_text.insert(tk.END, "3. Token的IAT時間偏移可通過設置IAT Offset參數調整\n", "info")
         
         # 顯示IAT時間偏移信息
         if self.iat_offset_var.get() != 0:
-            result += f"\n註：此Token的IAT（簽發時間）已偏移 {self.iat_offset_var.get()} 分鐘"
-        
-        self.result_text.insert(tk.END, result)
+            self.result_text.insert(tk.END, f"\n註：此Token的IAT（簽發時間）已偏移 {self.iat_offset_var.get()} 分鐘", "important")
     
     def save_token_result(self, token, config, iat_timestamp, output_file="jwt_token_result.json"):
         """將token結果保存到JSON文件"""
@@ -287,7 +536,7 @@ class TokenGeneratorApp:
             text_content = self.result_text.get(1.0, tk.END)
             token_lines = text_content.split('\n')
             for i, line in enumerate(token_lines):
-                if i > 0 and line.strip() and not line.startswith('====='):
+                if i > 0 and line.strip() and not line.startswith('生成的') and not line.startswith('Token') and not line.startswith('使用'):
                     token = line.strip()
                     self.root.clipboard_clear()
                     self.root.clipboard_append(token)
