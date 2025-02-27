@@ -1,0 +1,9 @@
+{
+    "subject": "your_subject_here",
+    "api_key": "your_api_key_here",
+    "storefrontStoreCode": "your_storefront_code_here",
+    "additional_claims": {
+      "name": "your_name_here"
+    },
+    "private_key": "-----BEGIN RSA PRIVATE KEY-----\nYour_Private_Key_Here\n-----END RSA PRIVATE KEY-----"
+}
